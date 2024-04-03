@@ -58,7 +58,7 @@ where
     view! {
         <div
             ref=container
-            style="width: 100%; height: 100%; overflow: scroll;"
+            style="width: 100%; height: 100%; overflow-y: scroll;"
             on:scroll=move |ev| {
                 let target: leptos::web_sys::HtmlElement = event_target(&ev);
                 scroll_top.set(target.scroll_top() as usize);
