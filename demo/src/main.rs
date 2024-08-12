@@ -1,5 +1,5 @@
 use leptos::*;
-use leptos_virtual_scroller::VirtualGridScroller;
+use leptos_virtual_scroller::{VirtualGridScroller, VirtualScroller};
 
 fn main() {
     console_error_panic_hook::set_once();
@@ -14,10 +14,10 @@ fn main() {
     mount_to_body(move || {
         view! {
             <div style="height: 100vh;">
-                <VirtualGridScroller
+                <VirtualScroller
                     each=items_sig
                     item_height=200
-                    item_width=200
+                    // item_width=200
                     children=move |(index, item)| {
                         view! { <div>{item}</div> }
                     }
