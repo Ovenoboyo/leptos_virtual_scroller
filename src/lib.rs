@@ -80,6 +80,7 @@ where
                     each=move || (buffer_bounds.get().0..buffer_bounds.get().1)
                     key=|i| *i
                     children=move |i| {
+                        let each = each.get();
                         view! {
                             <div
                                 style=format!("position: absolute; width: 100%; {}", inner_el_style)
@@ -90,7 +91,6 @@ where
                                 {children((
                                     i,
                                     each
-                                        .get()
                                         .get(i)
                                         .unwrap_or_else(|| {
                                             panic!(
@@ -200,6 +200,7 @@ where
                     key=|i| *i
                     children=move |i| {
                         let grid_index = i % grid_items.get();
+                        let each = each.get();
                         view! {
                             <div
                                 style=format!("position: absolute; {}", inner_el_style)
@@ -211,7 +212,6 @@ where
                                 {children((
                                     i,
                                     each
-                                        .get()
                                         .get(i)
                                         .unwrap_or_else(|| {
                                             panic!(
