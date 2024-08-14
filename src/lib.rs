@@ -60,6 +60,14 @@ where
         window_height.set(rect.height() as usize)
     });
 
+    let buffer_range = create_rw_signal(0..0);
+
+    create_effect(move |_| {
+        let buffer_bounds = buffer_bounds.get();
+        let _ = each.get();
+        buffer_range.set(buffer_bounds.0..buffer_bounds.1);
+    });
+
     view! {
         <div
             ref=container
@@ -76,34 +84,30 @@ where
                 style:height=move || format!("{}px", inner_height.get())
             >
 
-                <For
-                    each=move || (buffer_bounds.get().0..buffer_bounds.get().1)
-                    key=|i| *i
-                    children=move |i| {
-                        let each = each.get();
-                        view! {
-                            <div
-                                style=format!("position: absolute; width: 100%; {}", inner_el_style)
+                {move || {
+                    let mut ret = vec![];
+                    for i in buffer_bounds.get().0..buffer_bounds.get().1 {
+                        let binding = each.get();
+                        let item = binding.get(i).unwrap();
+                        ret.push(
+                            view! {
+                                <div
+                                    style=format!(
+                                        "position: absolute; width: 100%; {}",
+                                        inner_el_style,
+                                    )
 
-                                style:top=format!("{}px", i * item_height)
-                            >
+                                    style:top=format!("{}px", i * item_height)
+                                >
 
-                                {children((
-                                    i,
-                                    each
-                                        .get(i)
-                                        .unwrap_or_else(|| {
-                                            panic!(
-                                                "Item passed to VirtualScroller at index {} should exist",
-                                                i,
-                                            )
-                                        }),
-                                ))}
+                                    {children((i, item))}
 
-                            </div>
-                        }
+                                </div>
+                            },
+                        );
                     }
-                />
+                    ret.collect_view()
+                }}
 
             </div>
         </div>
@@ -195,37 +199,32 @@ where
                 style:height=move || format!("{}px", inner_height.get())
             >
 
-                <For
-                    each=move || (buffer_bounds.get().0..buffer_bounds.get().1)
-                    key=|i| *i
-                    children=move |i| {
+                {move || {
+                    let mut ret = vec![];
+                    for i in buffer_bounds.get().0..buffer_bounds.get().1 {
+                        let binding = each.get();
+                        let item = binding.get(i).unwrap();
                         let grid_index = i % grid_items.get();
-                        let each = each.get();
-                        view! {
-                            <div
-                                style=format!("position: absolute; {}", inner_el_style)
+                        ret.push(
+                            view! {
+                                <div
+                                    style=format!("position: absolute; {}", inner_el_style)
 
-                                style:top=format!("{}px", ((i) / grid_items.get()) * item_height)
-                                style:left=format!("{}px", grid_index * item_width)
-                            >
+                                    style:top=format!(
+                                        "{}px",
+                                        ((i) / grid_items.get()) * item_height,
+                                    )
+                                    style:left=format!("{}px", grid_index * item_width)
+                                >
 
-                                {children((
-                                    i,
-                                    each
-                                        .get(i)
-                                        .unwrap_or_else(|| {
-                                            panic!(
-                                                "Item passed to VirtualScroller at index {} should exist",
-                                                i,
-                                            )
-                                        }),
-                                ))}
+                                    {children((i, item))}
 
-                            </div>
-                        }
+                                </div>
+                            },
+                        );
                     }
-                />
-
+                    ret.collect_view()
+                }}
             </div>
         </div>
     }
