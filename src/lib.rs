@@ -2,8 +2,8 @@ use std::rc::Rc;
 
 use leptos::{
     component, create_effect, create_memo, create_node_ref, create_rw_signal, event_target,
-    leptos_dom::logging::console_log, view, CollectView, For, IntoView, SignalGet,
-    SignalGetUntracked, SignalSet, SignalUpdate,
+    html::Div, leptos_dom::logging::console_log, view, CollectView, For, IntoView, NodeRef,
+    SignalGet, SignalGetUntracked, SignalSet, SignalUpdate,
 };
 use leptos_use::use_resize_observer;
 
