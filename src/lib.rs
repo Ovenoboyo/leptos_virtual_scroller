@@ -13,6 +13,7 @@ pub fn VirtualScroller<T, S, C, N>(
     #[prop()] children: C,
     #[prop()] item_height: usize,
     #[prop(default = "")] inner_el_style: &'static str,
+    #[prop(optional)] node_ref: Option<NodeRef<Div>>,
 ) -> impl IntoView
 where
     C: Fn((usize, &T)) -> N + 'static,
@@ -54,7 +55,12 @@ where
         (buffer_start, buffer_end)
     });
 
-    let container = create_node_ref();
+    let container = if let Some(node_ref) = node_ref {
+        node_ref
+    } else {
+        create_node_ref()
+    };
+
     use_resize_observer(container, move |a, b| {
         let rect = a[0].content_rect();
         window_height.set(rect.height() as usize)
@@ -121,6 +127,7 @@ pub fn VirtualGridScroller<T, S, C, N>(
     #[prop()] item_height: usize,
     #[prop()] item_width: usize,
     #[prop(default = "")] inner_el_style: &'static str,
+    #[prop(optional)] node_ref: Option<NodeRef<Div>>,
 ) -> impl IntoView
 where
     C: Fn((usize, &T)) -> N + 'static,
@@ -176,7 +183,12 @@ where
         (buffer_start, buffer_end)
     });
 
-    let container = create_node_ref();
+    let container = if let Some(node_ref) = node_ref {
+        node_ref
+    } else {
+        create_node_ref()
+    };
+
     use_resize_observer(container, move |a, b| {
         let rect = a[0].content_rect();
         window_height.set(rect.height() as usize);
