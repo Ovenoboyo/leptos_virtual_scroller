@@ -23,7 +23,7 @@ pub fn VirtualScroller<T, S, K, KN, C, N, H>(
     #[prop()] each: S,
     #[prop()] key: KN,
     #[prop()] children: C,
-    #[prop()] header: Option<H>,
+    #[prop(optional)] header: Option<H>,
     #[prop(optional)] header_height: usize,
     #[prop()] item_height: usize,
     #[prop(default = "")] inner_el_style: &'static str,
