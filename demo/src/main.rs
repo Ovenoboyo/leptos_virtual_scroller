@@ -19,6 +19,9 @@ fn main() {
                 <VirtualScroller
                     node_ref=node_ref
                     each=items_sig
+                    key=move|i| {
+                        i.clone()
+                    }
                     item_height=200
                     header_height=300
                     // item_width=200

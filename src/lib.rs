@@ -1,4 +1,4 @@
-use std::rc::Rc;
+use std::{hash::Hash, rc::Rc};
 
 use leptos::{
     component, create_effect, create_memo, create_node_ref, create_rw_signal, event_target,
@@ -19,8 +19,9 @@ impl<S> PartialEq for ItemKey<S> {
 }
 
 #[component]
-pub fn VirtualScroller<T, S, C, N, H>(
+pub fn VirtualScroller<T, S, K, KN, C, N, H>(
     #[prop()] each: S,
+    #[prop()] key: KN,
     #[prop()] children: C,
     #[prop()] header: Option<H>,
     #[prop(optional)] header_height: usize,
@@ -30,14 +31,16 @@ pub fn VirtualScroller<T, S, C, N, H>(
 ) -> impl IntoView
 where
     C: Fn((usize, &T)) -> N + 'static,
+    KN: (Fn(&T) -> K) + 'static,
+    K: Eq + Hash + 'static,
     N: IntoView,
-    S: SignalGet<Value = Vec<T>> + SignalWith<Value = Vec<T>> + Copy + 'static,
+    S: SignalWith<Value = Vec<T>> + Copy + 'static,
     H: IntoView,
 {
     let items_len_sig = create_rw_signal(0usize);
 
     let inner_height = create_memo(move |_| {
-        let items_len = each.get().len();
+        let items_len = each.with(|i| i.len());
         items_len_sig.set(items_len);
         items_len * item_height
     });
@@ -81,7 +84,7 @@ where
 
     create_effect(move |_| {
         let buffer_bounds = buffer_bounds.get();
-        let _ = each.get();
+        each.with(|_| {});
         buffer_range.set(buffer_bounds.0..buffer_bounds.1);
     });
 
@@ -103,39 +106,43 @@ where
 
             {header}
 
-                {move || {
-                    let mut ret = vec![];
-                    for i in buffer_bounds.get().0..buffer_bounds.get().1 {
-                        let binding = each.get();
-                        let item = binding.get(i).unwrap();
-                        ret.push(
-                            view! {
-                                <div
-                                    style=format!(
-                                        "position: absolute; width: 100%; {}",
-                                        inner_el_style,
-                                    )
+            <For each=move || (buffer_bounds.get().0..buffer_bounds.get().1) key=move |i| {
+                each.with(|item| {
+                    key(item.get(*i).unwrap())
+                })
+            } children=move |i| {
+                each.with(|item| {
+                    let item = item.get(i).unwrap();
+                    let (buffer_start, buffer_end) = buffer_bounds.get();
+                    if i >= buffer_start && i <= buffer_end {
+                        view! {
+                            <div
+                                style=format!(
+                                    "position: absolute; width: 100%; {}",
+                                    inner_el_style,
+                                )
 
-                                    style:top=format!("{}px", i * item_height + header_height)
-                                >
+                                style:top=format!("{}px", i * item_height + header_height)
+                            >
 
-                                    {children((i, item))}
+                                {children((i, item))}
 
-                                </div>
-                            },
-                        );
+                            </div>
+                        }.into_view()
+                    } else {
+                        view! {}.into_view()
                     }
-                    ret.collect_view()
-                }}
-
+                })
+            } />
             </div>
         </div>
     }
 }
 
 #[component]
-pub fn VirtualGridScroller<T, S, C, N>(
+pub fn VirtualGridScroller<T, S, K, KN, C, N>(
     #[prop()] each: S,
+    #[prop()] key: KN,
     #[prop()] children: C,
     #[prop()] item_height: usize,
     #[prop()] item_width: usize,
@@ -144,10 +151,12 @@ pub fn VirtualGridScroller<T, S, C, N>(
 ) -> impl IntoView
 where
     C: Fn((usize, &T)) -> N + 'static,
+    KN: (Fn(&T) -> K) + 'static,
+    K: Eq + Hash + 'static,
     N: IntoView,
-    S: SignalGet<Value = Vec<T>> + Copy + 'static,
+    S: SignalWith<Value = Vec<T>> + Copy + 'static,
 {
-    let items_len_sig = create_memo(move |_| each.get().len());
+    let items_len_sig = create_memo(move |_| each.with(|i| i.len()));
     let window_height = create_rw_signal(0);
     let window_width = create_rw_signal(0);
 
@@ -230,32 +239,36 @@ where
                 style:height=move || format!("{}px", inner_height.get())
             >
 
-                {move || {
-                    let mut ret = vec![];
-                    for i in buffer_bounds.get().0..buffer_bounds.get().1 {
-                        let binding = each.get();
-                        let item = binding.get(i).unwrap();
+            <For each=move || (buffer_bounds.get().0..buffer_bounds.get().1) key=move |i| {
+                each.with(|item| {
+                    key(item.get(*i).unwrap())
+                })
+            } children=move |i| {
+                each.with(|item| {
+                    let item = item.get(i).unwrap();
+                    let (buffer_start, buffer_end) = buffer_bounds.get();
+                    if i >= buffer_start && i <= buffer_end {
                         let grid_index = i % grid_items.get();
-                        ret.push(
-                            view! {
-                                <div
-                                    style=format!("position: absolute; {}", inner_el_style)
+                        view! {
+                            <div
+                                style=format!("position: absolute; {}", inner_el_style)
 
-                                    style:top=format!(
-                                        "{}px",
-                                        ((i) / grid_items.get()) * item_height,
-                                    )
-                                    style:left=format!("{}px", grid_index * item_width)
-                                >
+                                style:top=format!(
+                                    "{}px",
+                                    ((i) / grid_items.get()) * item_height,
+                                )
+                                style:left=format!("{}px", grid_index * item_width)
+                            >
 
-                                    {children((i, item))}
+                                {children((i, item))}
 
-                                </div>
-                            },
-                        );
+                            </div>
+                        }.into_view()
+                    } else {
+                        view! {}.into_view()
                     }
-                    ret.collect_view()
-                }}
+                })
+            } />
             </div>
         </div>
     }
