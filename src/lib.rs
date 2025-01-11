@@ -3,14 +3,27 @@ use std::rc::Rc;
 use leptos::{
     component, create_effect, create_memo, create_node_ref, create_rw_signal, event_target,
     html::Div, leptos_dom::logging::console_log, view, CollectView, For, IntoView, NodeRef,
-    SignalGet, SignalGetUntracked, SignalSet, SignalUpdate,
+    SignalGet, SignalGetUntracked, SignalSet, SignalUpdate, SignalWith, View,
 };
 use leptos_use::use_resize_observer;
 
+struct ItemKey<S> {
+    key: String,
+    item: S,
+}
+
+impl<S> PartialEq for ItemKey<S> {
+    fn eq(&self, other: &Self) -> bool {
+        self.key.eq(&other.key)
+    }
+}
+
 #[component]
-pub fn VirtualScroller<T, S, C, N>(
+pub fn VirtualScroller<T, S, C, N, H>(
     #[prop()] each: S,
     #[prop()] children: C,
+    #[prop()] header: Option<H>,
+    #[prop(optional)] header_height: usize,
     #[prop()] item_height: usize,
     #[prop(default = "")] inner_el_style: &'static str,
     #[prop(optional)] node_ref: Option<NodeRef<Div>>,
@@ -18,7 +31,8 @@ pub fn VirtualScroller<T, S, C, N>(
 where
     C: Fn((usize, &T)) -> N + 'static,
     N: IntoView,
-    S: SignalGet<Value = Vec<T>> + Copy + 'static,
+    S: SignalGet<Value = Vec<T>> + SignalWith<Value = Vec<T>> + Copy + 'static,
+    H: IntoView,
 {
     let items_len_sig = create_rw_signal(0usize);
 
@@ -38,7 +52,8 @@ where
         let items_len = items_len_sig.get();
 
         let start_index_res = scroll_top / item_height;
-        let end_index_res = ((scroll_top + window_height) / item_height).min(items_len);
+        let end_index_res =
+            ((header_height + scroll_top + window_height) / item_height).min(items_len);
 
         (start_index_res, end_index_res)
     });
@@ -46,11 +61,7 @@ where
     let buffer_bounds = create_memo(move |_| {
         let items_len = items_len_sig.get();
         let (start_index, end_index) = index_bounds.get();
-        let buffer_start = if start_index >= 2 {
-            start_index - 2
-        } else {
-            start_index
-        };
+        let buffer_start = if start_index >= 2 { start_index - 2 } else { 0 };
         let buffer_end = (end_index + 2).min(items_len);
         (buffer_start, buffer_end)
     });
@@ -90,6 +101,8 @@ where
                 style:height=move || format!("{}px", inner_height.get())
             >
 
+            {header}
+
                 {move || {
                     let mut ret = vec![];
                     for i in buffer_bounds.get().0..buffer_bounds.get().1 {
@@ -103,7 +116,7 @@ where
                                         inner_el_style,
                                     )
 
-                                    style:top=format!("{}px", i * item_height)
+                                    style:top=format!("{}px", i * item_height + header_height)
                                 >
 
                                     {children((i, item))}
@@ -193,6 +206,12 @@ where
         let rect = a[0].content_rect();
         window_height.set(rect.height() as usize);
         window_width.set(rect.width() as usize);
+    });
+
+    create_effect(move |_| {
+        let scroll_top = scroll_top.get();
+        let window_height = window_height.get();
+        println!("scroll top: {} {}", scroll_top, window_height);
     });
 
     view! {
