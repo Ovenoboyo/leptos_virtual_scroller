@@ -1,5 +1,4 @@
-use leptos::*;
-use leptos_dom::logging::console_log;
+use leptos::prelude::*;
 use leptos_virtual_scroller::{VirtualGridScroller, VirtualScroller};
 
 fn main() {
@@ -10,8 +9,8 @@ fn main() {
         items.push(format!("hello {}", i));
     }
 
-    let items_sig = create_rw_signal(items);
-    let node_ref = create_node_ref();
+    let items_sig = RwSignal::new(items);
+    let node_ref = NodeRef::new();
 
     mount_to_body(move || {
         view! {
@@ -26,12 +25,11 @@ fn main() {
                     header_height=300
                     // item_width=200
                     children=move |(index, item)| {
-                        console_log(&format!("rerendered {}", index));
-                        view! { <div>{item}</div> }
+                        view! { <div>{item.clone()}</div> }
                     }
                     header=Some(move || {
                         view! {
-                            <div style="height: 300px; width: 300px; background: blue;"></div>
+                        <div></div>
                         }
                     })
                 />

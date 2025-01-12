@@ -1,9 +1,13 @@
-use std::{hash::Hash, rc::Rc};
+use std::hash::Hash;
 
 use leptos::{
-    component, create_effect, create_memo, create_node_ref, create_rw_signal, event_target,
-    html::Div, leptos_dom::logging::console_log, view, CollectView, For, IntoView, NodeRef,
-    SignalGet, SignalGetUntracked, SignalSet, SignalUpdate, SignalWith, View,
+    component,
+    html::Div,
+    prelude::{
+        event_target, Effect, ElementChild, For, Get, GlobalAttributes, IntoAny, Memo, NodeRef,
+        NodeRefAttribute, OnAttribute, RwSignal, Set, StyleAttribute, With,
+    },
+    view, IntoView,
 };
 use leptos_use::use_resize_observer;
 
@@ -30,26 +34,25 @@ pub fn VirtualScroller<T, S, K, KN, C, N, H>(
     #[prop(optional)] node_ref: Option<NodeRef<Div>>,
 ) -> impl IntoView
 where
-    C: Fn((usize, &T)) -> N + 'static,
-    KN: (Fn(&T) -> K) + 'static,
+    C: Fn((usize, &T)) -> N + 'static + Clone + Send + Sync,
+    KN: (Fn(&T) -> K) + 'static + Clone + Send + Sync,
     K: Eq + Hash + 'static,
-    N: IntoView,
-    S: SignalWith<Value = Vec<T>> + Copy + 'static,
+    N: IntoView + 'static,
+    S: With<Value = Vec<T>> + Copy + 'static + Send + Sync,
     H: IntoView,
 {
-    let items_len_sig = create_rw_signal(0usize);
-
-    let inner_height = create_memo(move |_| {
+    let items_len_sig = RwSignal::new(0usize);
+    let inner_height = Memo::new(move |_| {
         let items_len = each.with(|i| i.len());
         items_len_sig.set(items_len);
         items_len * item_height
     });
 
-    let window_height = create_rw_signal(0);
+    let window_height = RwSignal::new(0);
 
-    let scroll_top = create_rw_signal(0);
+    let scroll_top = RwSignal::new(0);
 
-    let index_bounds = create_memo(move |_| {
+    let index_bounds = Memo::new(move |_| {
         let scroll_top = scroll_top.get();
         let window_height = window_height.get();
         let items_len = items_len_sig.get();
@@ -61,7 +64,7 @@ where
         (start_index_res, end_index_res)
     });
 
-    let buffer_bounds = create_memo(move |_| {
+    let buffer_bounds = Memo::new(move |_| {
         let items_len = items_len_sig.get();
         let (start_index, end_index) = index_bounds.get();
         let buffer_start = if start_index >= 2 { start_index - 2 } else { 0 };
@@ -72,7 +75,7 @@ where
     let container = if let Some(node_ref) = node_ref {
         node_ref
     } else {
-        create_node_ref()
+        NodeRef::new()
     };
 
     use_resize_observer(container, move |a, b| {
@@ -80,9 +83,9 @@ where
         window_height.set(rect.height() as usize)
     });
 
-    let buffer_range = create_rw_signal(0..0);
+    let buffer_range = RwSignal::new(0..0);
 
-    create_effect(move |_| {
+    Effect::new(move || {
         let buffer_bounds = buffer_bounds.get();
         each.with(|_| {});
         buffer_range.set(buffer_bounds.0..buffer_bounds.1);
@@ -90,7 +93,7 @@ where
 
     view! {
         <div
-            ref=container
+            node_ref=container
             style="width: 100%; height: 100%; overflow-y: scroll;"
             on:scroll=move |ev| {
                 let target: leptos::web_sys::HtmlElement = event_target(&ev);
@@ -128,9 +131,9 @@ where
                                 {children((i, item))}
 
                             </div>
-                        }.into_view()
+                        }.into_any()
                     } else {
-                        view! {}.into_view()
+                        ().into_any()
                     }
                 })
             } />
@@ -150,22 +153,22 @@ pub fn VirtualGridScroller<T, S, K, KN, C, N>(
     #[prop(optional)] node_ref: Option<NodeRef<Div>>,
 ) -> impl IntoView
 where
-    C: Fn((usize, &T)) -> N + 'static,
-    KN: (Fn(&T) -> K) + 'static,
+    C: Fn((usize, &T)) -> N + 'static + Clone + Send + Sync,
+    KN: (Fn(&T) -> K) + 'static + Clone + Send + Sync,
     K: Eq + Hash + 'static,
-    N: IntoView,
-    S: SignalWith<Value = Vec<T>> + Copy + 'static,
+    N: IntoView + 'static,
+    S: With<Value = Vec<T>> + Copy + 'static + Send + Sync,
 {
-    let items_len_sig = create_memo(move |_| each.with(|i| i.len()));
-    let window_height = create_rw_signal(0);
-    let window_width = create_rw_signal(0);
+    let items_len_sig = Memo::new(move |_| each.with(|i| i.len()));
+    let window_height = RwSignal::new(0);
+    let window_width = RwSignal::new(0);
 
-    let grid_items = create_memo(move |_| {
+    let grid_items = Memo::new(move |_| {
         let window_width = window_width.get();
         (window_width / item_width).max(1)
     });
 
-    let inner_height = create_memo(move |_| {
+    let inner_height = Memo::new(move |_| {
         let grid_items = grid_items.get();
         if grid_items == 0 {
             return 0;
@@ -174,9 +177,9 @@ where
         (items_len / grid_items) * item_height
     });
 
-    let scroll_top = create_rw_signal(0);
+    let scroll_top = RwSignal::new(0);
 
-    let index_bounds = create_memo(move |_| {
+    let index_bounds = Memo::new(move |_| {
         let scroll_top = scroll_top.get();
         let window_height = window_height.get();
         let items_len = items_len_sig.get();
@@ -190,7 +193,7 @@ where
         (start_index_res, end_index_res)
     });
 
-    let buffer_bounds = create_memo(move |_| {
+    let buffer_bounds = Memo::new(move |_| {
         let grid_items = grid_items.get().max(1);
         let extra_items = grid_items * 1;
         let items_len = items_len_sig.get();
@@ -208,7 +211,7 @@ where
     let container = if let Some(node_ref) = node_ref {
         node_ref
     } else {
-        create_node_ref()
+        NodeRef::new()
     };
 
     use_resize_observer(container, move |a, b| {
@@ -217,7 +220,7 @@ where
         window_width.set(rect.width() as usize);
     });
 
-    create_effect(move |_| {
+    Effect::new(move |_| {
         let scroll_top = scroll_top.get();
         let window_height = window_height.get();
         println!("scroll top: {} {}", scroll_top, window_height);
@@ -225,7 +228,7 @@ where
 
     view! {
         <div
-            ref=container
+            node_ref=container
             style="width: 100%; height: 100%; overflow-y: scroll;"
             on:scroll=move |ev| {
                 let target: leptos::web_sys::HtmlElement = event_target(&ev);
@@ -263,9 +266,9 @@ where
                                 {children((i, item))}
 
                             </div>
-                        }.into_view()
+                        }.into_any()
                     } else {
-                        view! {}.into_view()
+                        ().into_any()
                     }
                 })
             } />

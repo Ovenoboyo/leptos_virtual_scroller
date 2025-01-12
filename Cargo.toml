@@ -4,8 +4,9 @@ version = "0.1.1"
 edition = "2021"
 
 [dependencies]
-leptos = { version = "0.6.14", features = ["csr"] }
-leptos-use = "0.12.0"
+leptos = { version = "0.7.3", features = ["csr"] }
+leptos-use = "0.15.3"
+leptos_dom = "0.7.3"
 
 [workspace]
 members = ["demo"]
