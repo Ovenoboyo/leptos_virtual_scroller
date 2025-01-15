@@ -88,14 +88,6 @@ where
         window_height.set(rect.height() as usize)
     });
 
-    let buffer_range = RwSignal::new(0..0);
-
-    Effect::new(move || {
-        let buffer_bounds = buffer_bounds.get();
-        each.with(|_| {});
-        buffer_range.set(buffer_bounds.0..buffer_bounds.1);
-    });
-
     view! {
         <div
             node_ref=container
@@ -223,12 +215,6 @@ where
         let rect = a[0].content_rect();
         window_height.set(rect.height() as usize);
         window_width.set(rect.width() as usize);
-    });
-
-    Effect::new(move || {
-        let buffer_bounds = buffer_bounds.get();
-        each.with(|_| {});
-        buffer_range.set(buffer_bounds.0..buffer_bounds.1);
     });
 
     view! {
