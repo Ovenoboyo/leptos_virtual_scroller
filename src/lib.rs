@@ -9,6 +9,7 @@ use leptos::{
     },
     view, IntoView,
 };
+use leptos_dom::logging::console_log;
 use leptos_use::use_resize_observer;
 
 struct ItemKey<S> {
@@ -57,7 +58,11 @@ where
         let window_height = window_height.get();
         let items_len = items_len_sig.get();
 
-        let start_index_res = scroll_top / item_height;
+        let start_index_res = if scroll_top <= header_height {
+            0
+        } else {
+            (scroll_top - header_height) / item_height
+        };
         let end_index_res =
             ((header_height + scroll_top + window_height) / item_height).min(items_len);
 
