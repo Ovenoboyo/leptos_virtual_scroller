@@ -5,7 +5,7 @@ use leptos::{
     html::Div,
     prelude::{
         event_target, Effect, ElementChild, For, Get, GlobalAttributes, IntoAny, Memo, NodeRef,
-        NodeRefAttribute, OnAttribute, RwSignal, Set, StyleAttribute, With,
+        NodeRefAttribute, OnAttribute, RwSignal, Set, StyleAttribute, Update, With,
     },
     view, IntoView,
 };
@@ -88,55 +88,71 @@ where
         window_height.set(rect.height() as usize)
     });
 
-    view! {
-        <div
-            node_ref=container
-            style="width: 100%; height: 100%; overflow-y: scroll;"
-            on:scroll=move |ev| {
-                let target: leptos::web_sys::HtmlElement = event_target(&ev);
-                scroll_top.set(target.scroll_top() as usize);
-            }
-        >
+    let force_refresh = RwSignal::new(false);
+    Effect::new(move || {
+        each.with(|_| {});
+        force_refresh.update(|v| {
+            *v = !*v;
+        });
+    });
 
+    view! {
             <div
-                id="scroller"
-                style="position: relative;"
-                style:height=move || format!("{}px", inner_height.get())
+                node_ref=container
+                style="width: 100%; height: 100%; overflow-y: scroll;"
+                on:scroll=move |ev| {
+                    let target: leptos::web_sys::HtmlElement = event_target(&ev);
+                    scroll_top.set(target.scroll_top() as usize);
+                }
             >
 
-            {header}
+                <div
+                    id="scroller"
+                    style="position: relative;"
+                    style:height=move || format!("{}px", inner_height.get())
+                >
 
-            <For each=move || (buffer_bounds.get().0..buffer_bounds.get().1) key=move |i| {
-                each.with(|item| {
-                    key(item.get(*i).unwrap())
-                })
-            } children=move |i| {
-                each.with(|item| {
-                    let item = item.get(i).unwrap();
-                    let (buffer_start, buffer_end) = buffer_bounds.get();
-                    if i >= buffer_start && i <= buffer_end {
-                        view! {
-                            <div
-                                style=format!(
-                                    "position: absolute; width: 100%; {}",
-                                    inner_el_style,
-                                )
+                {header}
+    {
+        move || {
+            let children = children.clone();
+            let key = key.clone();
+            force_refresh.get();
+            view!{
+                <For each=move || (buffer_bounds.get().0..buffer_bounds.get().1) key=move |i| {
+                    each.with(|item| {
+                        key(item.get(*i).unwrap())
+                    })
+                } children=move |i| {
+                    each.with(|item| {
+                        let item = item.get(i).unwrap();
+                        let (buffer_start, buffer_end) = buffer_bounds.get();
+                        if i >= buffer_start && i <= buffer_end {
+                            view! {
+                                <div
+                                    style=format!(
+                                        "position: absolute; width: 100%; {}",
+                                        inner_el_style,
+                                    )
 
-                                style:top=format!("{}px", i * item_height + header_height)
-                            >
+                                    style:top=format!("{}px", i * item_height + header_height)
+                                >
 
-                                {children((i, item))}
+                                    {children((i, item))}
 
-                            </div>
-                        }.into_any()
-                    } else {
-                        ().into_any()
-                    }
-                })
-            } />
-            </div>
-        </div>
+                                </div>
+                            }.into_any()
+                        } else {
+                            ().into_any()
+                        }
+                    })
+                } />
+            }
+        }
     }
+                </div>
+            </div>
+        }
 }
 
 #[component]
@@ -217,6 +233,14 @@ where
         window_width.set(rect.width() as usize);
     });
 
+    let force_refresh = RwSignal::new(false);
+    Effect::new(move || {
+        each.with(|_| {});
+        force_refresh.update(|v| {
+            *v = !*v;
+        });
+    });
+
     view! {
         <div
             node_ref=container
@@ -233,36 +257,47 @@ where
                 style:height=move || format!("{}px", inner_height.get())
             >
 
-            <For each=move || (buffer_bounds.get().0..buffer_bounds.get().1) key=move |i| {
-                each.with(|item| {
-                    key(item.get(*i).unwrap())
-                })
-            } children=move |i| {
-                each.with(|item| {
-                    let item = item.get(i).unwrap();
-                    let (buffer_start, buffer_end) = buffer_bounds.get();
-                    if i >= buffer_start && i <= buffer_end {
-                        let grid_index = i % grid_items.get();
-                        view! {
-                            <div
-                                style=format!("position: absolute; {}", inner_el_style)
+            {
+                move || {
+                    let children = children.clone();
+                    let key = key.clone();
+                    force_refresh.get();
 
-                                style:top=format!(
-                                    "{}px",
-                                    ((i) / grid_items.get()) * item_height,
-                                )
-                                style:left=format!("{}px", grid_index * item_width)
-                            >
+                    view !{
+                        <For each=move || (buffer_bounds.get().0..buffer_bounds.get().1) key=move |i| {
+                            each.with(|item| {
+                                key(item.get(*i).unwrap())
+                            })
+                        } children=move |i| {
+                            each.with(|item| {
+                                let item = item.get(i).unwrap();
+                                let (buffer_start, buffer_end) = buffer_bounds.get();
+                                if i >= buffer_start && i <= buffer_end {
+                                    let grid_index = i % grid_items.get();
+                                    view! {
+                                        <div
+                                            style=format!("position: absolute; {}", inner_el_style)
 
-                                {children((i, item))}
+                                            style:top=format!(
+                                                "{}px",
+                                                ((i) / grid_items.get()) * item_height,
+                                            )
+                                            style:left=format!("{}px", grid_index * item_width)
+                                        >
 
-                            </div>
-                        }.into_any()
-                    } else {
-                        ().into_any()
+                                            {children((i, item))}
+
+                                        </div>
+                                    }.into_any()
+                                } else {
+                                    ().into_any()
+                                }
+                            })
+                        } />
                     }
-                })
-            } />
+                    }
+            }
+
             </div>
         </div>
     }
