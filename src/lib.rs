@@ -225,10 +225,10 @@ where
         window_width.set(rect.width() as usize);
     });
 
-    Effect::new(move |_| {
-        let scroll_top = scroll_top.get();
-        let window_height = window_height.get();
-        println!("scroll top: {} {}", scroll_top, window_height);
+    Effect::new(move || {
+        let buffer_bounds = buffer_bounds.get();
+        each.with(|_| {});
+        buffer_range.set(buffer_bounds.0..buffer_bounds.1);
     });
 
     view! {
