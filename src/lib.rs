@@ -36,7 +36,7 @@ pub fn VirtualScroller<T, S, K, KN, C, N, H>(
 ) -> impl IntoView
 where
     C: Fn((usize, &T)) -> N + 'static + Clone + Send + Sync,
-    KN: (Fn(&T) -> K) + 'static + Clone + Send + Sync,
+    KN: (Fn((usize, &T)) -> K) + 'static + Clone + Send + Sync,
     K: Eq + Hash + 'static,
     N: IntoView + 'static,
     S: With<Value = Vec<T>> + Copy + 'static + Send + Sync,
@@ -121,7 +121,7 @@ where
             view!{
                 <For each=move || (buffer_bounds.get().0..buffer_bounds.get().1) key=move |i| {
                     each.with(|item| {
-                        key(item.get(*i).unwrap())
+                        key((*i, item.get(*i).unwrap()))
                     })
                 } children=move |i| {
                     each.with(|item| {
@@ -167,7 +167,7 @@ pub fn VirtualGridScroller<T, S, K, KN, C, N>(
 ) -> impl IntoView
 where
     C: Fn((usize, &T)) -> N + 'static + Clone + Send + Sync,
-    KN: (Fn(&T) -> K) + 'static + Clone + Send + Sync,
+    KN: (Fn((usize, &T)) -> K) + 'static + Clone + Send + Sync,
     K: Eq + Hash + 'static,
     N: IntoView + 'static,
     S: With<Value = Vec<T>> + Copy + 'static + Send + Sync,
@@ -266,7 +266,7 @@ where
                     view !{
                         <For each=move || (buffer_bounds.get().0..buffer_bounds.get().1) key=move |i| {
                             each.with(|item| {
-                                key(item.get(*i).unwrap())
+                                key((*i, item.get(*i).unwrap()))
                             })
                         } children=move |i| {
                             each.with(|item| {
