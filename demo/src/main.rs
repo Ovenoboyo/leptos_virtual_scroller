@@ -20,7 +20,7 @@ fn App() -> impl IntoView {
         set_timeout(
             move || {
                 let mut items = vec![];
-                for i in 1..20 {
+                for i in 1..200 {
                     items.push(format!("hello {}", i));
                 }
                 items_sig.update(move |i| {
@@ -43,7 +43,7 @@ fn App() -> impl IntoView {
                 node_ref=node_ref
                 each=items_sig
                 key=move|(_index, item)| {
-                    item.clone()
+                    Some(item.clone())
                 }
                 item_height=275
                 item_width=220

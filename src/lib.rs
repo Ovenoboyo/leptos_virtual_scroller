@@ -262,6 +262,8 @@ where
                     let children = children.clone();
                     let key = key.clone();
                     force_refresh.get();
+                    let grid_items = grid_items.get();
+
 
                     view !{
                         <For each=move || (buffer_bounds.get().0..buffer_bounds.get().1) key=move |i| {
@@ -273,16 +275,10 @@ where
                                 let item = item.get(i).unwrap();
                                 let (buffer_start, buffer_end) = buffer_bounds.get();
                                 if i >= buffer_start && i <= buffer_end {
-                                    let grid_index = i % grid_items.get();
+                                    let grid_index = i % grid_items;
                                     view! {
                                         <div
-                                            style=format!("position: absolute; {}", inner_el_style)
-
-                                            style:top=format!(
-                                                "{}px",
-                                                ((i) / grid_items.get()) * item_height,
-                                            )
-                                            style:left=format!("{}px", grid_index * item_width)
+                                            style=format!("position: absolute; top: {}px; left: {}px; {}", ((i) / grid_items) * item_height, grid_index * item_width, inner_el_style)
                                         >
 
                                             {children((i, item))}
