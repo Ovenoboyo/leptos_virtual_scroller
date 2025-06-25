@@ -46,7 +46,7 @@ where
     let inner_height = Memo::new(move |_| {
         let items_len = each.with(|i| i.len());
         items_len_sig.set(items_len);
-        items_len * item_height
+        header_height + (items_len * item_height)
     });
 
     let window_height = RwSignal::new(0);
