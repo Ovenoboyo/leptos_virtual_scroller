@@ -39,14 +39,15 @@ fn App() -> impl IntoView {
                 once.await;
             });
         }
-            <VirtualGridScroller
+            <VirtualScroller
                 node_ref=node_ref
                 each=items_sig
                 key=move|(_index, item)| {
                     Some(item.clone())
                 }
                 item_height=275
-                item_width=220
+                header=()
+                // item_width=220
                 children=move |(_index, item)| {
                     view! {
                         <div>

@@ -9,19 +9,7 @@ use leptos::{
     },
     view, IntoView,
 };
-use leptos_dom::logging::console_log;
 use leptos_use::use_resize_observer;
-
-struct ItemKey<S> {
-    key: String,
-    item: S,
-}
-
-impl<S> PartialEq for ItemKey<S> {
-    fn eq(&self, other: &Self) -> bool {
-        self.key.eq(&other.key)
-    }
-}
 
 #[component]
 pub fn VirtualScroller<T, S, K, KN, C, N, H>(
@@ -83,7 +71,7 @@ where
         NodeRef::new()
     };
 
-    use_resize_observer(container, move |a, b| {
+    use_resize_observer(container, move |a, _b| {
         let rect = a[0].content_rect();
         window_height.set(rect.height() as usize)
     });
@@ -119,7 +107,7 @@ where
             let key = key.clone();
             force_refresh.get();
             view!{
-                <For each=move || (buffer_bounds.get().0..buffer_bounds.get().1) key=move |i| {
+                <For each=move || buffer_bounds.get().0..buffer_bounds.get().1 key=move |i| {
                     each.with(|item| {
                         key((*i, item.get(*i).unwrap()))
                     })
@@ -227,7 +215,7 @@ where
         NodeRef::new()
     };
 
-    use_resize_observer(container, move |a, b| {
+    use_resize_observer(container, move |a, _b| {
         let rect = a[0].content_rect();
         window_height.set(rect.height() as usize);
         window_width.set(rect.width() as usize);
@@ -266,7 +254,7 @@ where
 
 
                     view !{
-                        <For each=move || (buffer_bounds.get().0..buffer_bounds.get().1) key=move |i| {
+                        <For each=move || buffer_bounds.get().0..buffer_bounds.get().1 key=move |i| {
                             each.with(|item| {
                                 key((*i, item.get(*i).unwrap()))
                             })
